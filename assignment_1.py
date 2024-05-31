@@ -39,10 +39,7 @@ def monitor():
                 processing_client_socket.sendall(json.dumps(
                     {"simulatorData" : {
                         "lat" : posi[0], 
-                        "lon" : posi[1], 
-                        "altitude" : posi[2], 
-                        "pitchAngle" : posi[3], 
-                        "rollAngle" : posi[4], 
+                        "lon" : posi[1],  
                         "yawAngle" : posi[5]
                     }}).encode() + b"\x17")
             
