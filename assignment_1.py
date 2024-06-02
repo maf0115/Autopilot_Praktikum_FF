@@ -1,32 +1,16 @@
 import xpc
-
-import socket
-import time
-import json
-
-HOST = '127.0.0.1'
-PORT_NR = 9000
-
+import pygame
+import graphics
 
 def monitor():
-    try: 
-        processing_server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        print('Created socket.')
-
-        processing_server_socket.bind((HOST, PORT_NR))
-        print('Socket was bound.')
-
-        print(f'Listening for connection on port {PORT_NR}')
-        processing_server_socket.listen(1)
-
-        processing_client_socket, _ = processing_server_socket.accept()
-        print('Connection accepted.')
-
-    except Exception as e: 
-        print(f'Exception occcured while binding the socket: {e}')
+    # Initialize pygame as the first thing
+    pygame.init()
+    graphics.setup()
 
     with xpc.XPlaneConnect() as client:
-        while True:
+        while graphics.RUNNING:
+            # Check for events in program loop
+
             posi = client.getPOSI()
 
             print("Loc: (%4f, %4f, %4f) Attitude (P %4f) (R %4f) (Y %4f)\n"
@@ -35,17 +19,9 @@ def monitor():
             autopilot_state = client.getDREFs("sim/cockpit/autopilot/autopilot_state")
             print("AP_State: %d", autopilot_state)
 
-            try: 
-                processing_client_socket.sendall(json.dumps(
-                    {"simulatorData" : {
-                        "lat" : posi[0], 
-                        "lon" : posi[1],  
-                        "yawAngle" : posi[5]
-                    }}).encode() + b"\x17")
-            
-                print('Data succesfully sent to processing.')
-            except Exception as e: 
-                print(f'Exception occurred while sending the data to processing: {e}')
+            # Render the screen
+
+
 
 if __name__ == "__main__":
 
