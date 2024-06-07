@@ -1,9 +1,15 @@
-import pygame
-from pygame.draw import circle, rect
+# Pygame imports
+from pygame import init, QUIT, KEYDOWN, K_ESCAPE, quit
+from pygame import event
+from pygame.draw import circle, rect, line
 from pygame import font, Rect
 from pygame import display, RESIZABLE 
 from pygame.image import load
+from pygame.math import Vector2
+
+# Native pyhon imports
 from os import path
+from math import degrees, cos, atan2
 
 # Images
 WINDOW_LOGO = load(path.join(".\Images", "ILS_Icon.png"))
@@ -25,25 +31,33 @@ INOP_COORD_X = CANVAS_SIZE/2 + 2*REF_POINT_DIST
 INOP_COORD_Y = CANVAS_SIZE/2 - 3*REF_POINT_DIST
 INOP_DIST = 20
 
+# Horizontal reference line coordinates (HOR. FLUGWEG)
+HOR_REF_X_START = 125
+HOR_REF_X_END = 675
+
+# Vertical reference line coordinates (GLEITWINKEL)
+VER_REF_Y_START = 125
+VER_REF_Y_END =  675
+MAX_DRIFT = 2.5
+
+# FAF VADAN reference coordinates (lat, lon)
+VADAN = (11.67508056, 48.74578056)
+
+# Runway threshold coordinates (lat, lon, heigth)
+RWY_THRESHOLD = (11.55578889, 48.71437778, 1253 * 0.3048)
+
 # Colors
 BLACK = (0, 0, 0)
 SLOPE_INDICATOR_COLOR = (150, 255, 100)
 ILS_BORDER_COLOR = (227, 225, 218)
 INOP_FLAG_COLOR = (255, 0, 0)
 
-# Map some coordinates to pixel values to get some reference points
-# These coordinates were obtained by clicking on some specific coordinates on the image and getting the pixel values of the mouse cursor
-MIN_X = (29/60, 250)
-MAX_X = (35/60, 405)
-MIN_Y = (50/60, 90) 
-MAX_Y = (40/60, 480)
-
 # Main window and game loop
 SCREEN = display.set_mode((CANVAS_SIZE, CANVAS_SIZE), RESIZABLE)
 RUNNING = True
 
 def setup_window_info()->None: 
-    pygame.init()
+    init()
     display.set_icon(WINDOW_LOGO)
     display.set_caption("Instrument Landing System (maf0115)")
 
@@ -67,13 +81,11 @@ def draw_ils()->None:
                     (x_start, y_start), 
                     REF_POINT_RADIUS)
 
-
             # Update coordinates
             cnt += 1
             x_start = CANVAS_SIZE/2 + abs(cnt * REF_POINT_DIST) * hor_dir
             y_start = CANVAS_SIZE/2 + abs(cnt * REF_POINT_DIST) * vert_dir
-            
-        
+                 
     draw_ref_points(CENTER, 1, 0)
     draw_ref_points(CENTER, -1, 0)
     draw_ref_points(CENTER, 0, 1)
@@ -91,22 +103,58 @@ def draw_inop_flag()->None:
     rect(SCREEN, INOP_FLAG_COLOR, inop_rect)
     SCREEN.blit(text_surface_object, text_rect)
 
+def draw_horizontal_reference(sim_data : list = None)->None:
+    line(SCREEN, 
+         SLOPE_INDICATOR_COLOR, 
+         (HOR_REF_X_START, CANVAS_SIZE/2), 
+         (HOR_REF_X_END, CANVAS_SIZE/2), 
+         7)
+
+def draw_vertical_reference(sim_data : list = None)->None:
+    def sign(num : float):
+        if num > 0: return 1
+        elif num < 0: return -1
+        else: return 0
+
+    # BAse the angle on real life calculations: trigonometry is your friend rn
+    angle = degrees(Vector2(sim_data[1], sim_data[0]).angle_to((RWY_THRESHOLD[0], RWY_THRESHOLD[1])))
+    print(f'angle: {angle}°')
+
+    if abs(angle) < MAX_DRIFT: 
+        x = CANVAS_SIZE/2 + (angle % MAX_DRIFT) * -REF_POINT_DIST
+        # Based on the degrees, draw the line
+        line(SCREEN, 
+            SLOPE_INDICATOR_COLOR, 
+            (x, VER_REF_Y_START), 
+            (x, VER_REF_Y_END), 
+            7)
+    else:
+        line(SCREEN, 
+            SLOPE_INDICATOR_COLOR, 
+            (CANVAS_SIZE/2 + REF_POINT_DIST * REF_POINT_AMT * -sign(angle), VER_REF_Y_START), 
+            (CANVAS_SIZE/2 + REF_POINT_DIST * REF_POINT_AMT * -sign(angle), VER_REF_Y_END), 
+            7)
+        draw_inop_flag()
+        
+
 def test_main():
     setup_window_info()
     global RUNNING
     while RUNNING:
-        for event in pygame.event.get(): 
-            if event.type == pygame.QUIT: 
+        for event_tmp in event.get(): 
+            if event_tmp.type == QUIT: 
                 RUNNING = False 
 
             # Events with keys
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
+            elif event_tmp.type == KEYDOWN:
+                if event.key == K_ESCAPE:
                     RUNNING = False
 
         draw_ils()
-        draw_inop_flag()
-        display.update()
+        draw_horizontal_reference()
+        draw_vertical_reference() 
+        display.update()    
+    quit()
 
 if __name__ == '__main__': 
     test_main()
