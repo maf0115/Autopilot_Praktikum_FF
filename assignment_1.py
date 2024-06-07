@@ -5,10 +5,18 @@ import graphics
 def monitor():
     # Initialize pygame as the first thing
     pygame.init()
-    graphics.setup()
+    graphics.setup_window_info()
 
     with xpc.XPlaneConnect() as client:
         while graphics.RUNNING:
+            for event in pygame.event.get(): 
+                if event.type == pygame.QUIT: 
+                    graphics.RUNNING = False 
+
+                # Events with keys
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        graphics.RUNNING = False
             # Check for events in program loop
 
             posi = client.getPOSI()
@@ -19,7 +27,9 @@ def monitor():
             autopilot_state = client.getDREFs("sim/cockpit/autopilot/autopilot_state")
             print("AP_State: %d", autopilot_state)
 
+            graphics.draw_scene(posi)
             # Render the screen
+        pygame.quit()
 
 
 
