@@ -13,7 +13,6 @@ WINDOW_LOGO = load(path.join(".\Images", "WindowLogo.png"))
 CANVAS_X = MANCHING_MAP.get_width()
 CANVAS_Y = MANCHING_MAP.get_height()
 
-
 # Color for the trace to keep track of what pattern the aricraft flew
 TRACE_COLOR = (221, 25, 224)
 BLACK = (0, 0, 0)
@@ -35,6 +34,11 @@ TRAIL_LIST = list()
 TRAIL_MAX_LEN = 5
 TRAIL_POINT_DISTANCE = 100
 
+# Variables to draw the fighter jet
+Y_DIST_COW = 11
+BASE = 5.5
+BORDER = 3
+
 def setup_window_info()->None:   
     display.set_icon(WINDOW_LOGO)
     display.set_caption("Navigation System GUI (maf0115)") 
@@ -44,19 +48,13 @@ def generate_dummy_coordinates():
             random.uniform(48 + 36/60, 48 + 52/50),
             random.randint(0, 360)]
 
-def get_coordinates(lat : float, lon : float)->tuple: 
-    
+def get_coordinates(lat : float, lon : float)->tuple:    
     # 0 is for coordinates
     # 1 is for pixels 
-    x = (((lat % 1) - MAX_X[0]) * (MAX_X[1] - MIN_X[1])) / (MAX_X[0] - MIN_X[0]) + MAX_X[1]
-
-    # The problem with this coordinate is that the y-axis is not divided up uniformingly -> Get another inerval, both in coordinates and in pixel values
-    y = (((lon % 1) - MAX_Y[0]) * (MAX_Y[1] - MIN_Y[1])) / (MAX_Y[0] - MIN_Y[0]) + MAX_Y[1] 
-
-    print(f'x: {x}\ty: {y}')
-    return (x, y)
-
-
+    return(
+        (((lat % 1) - MAX_X[0]) * (MAX_X[1] - MIN_X[1])) / (MAX_X[0] - MIN_X[0]) + MAX_X[1],
+        (((lon % 1) - MAX_Y[0]) * (MAX_Y[1] - MIN_Y[1])) / (MAX_Y[0] - MIN_Y[0]) + MAX_Y[1]
+        )
 
 def draw_fighter_jet(lat : float, lon : float, true_heading : float)->None: 
     """
@@ -70,8 +68,19 @@ def draw_fighter_jet(lat : float, lon : float, true_heading : float)->None:
     Returns: 
         None
     """
-    coords = get_coordinates(lat, lon)
-    fighter_jet = pygame.draw.polygon(SCREEN, [])
+    pygame.draw.polygon(SCREEN, 
+                        BLACK,
+                        [(lat, lon - Y_DIST_COW - BORDER),
+                        (lat - BASE - BORDER, lon +  Y_DIST_COW + BORDER),
+                        (lat + BASE + BORDER, lon +  Y_DIST_COW + BORDER)],  
+                        0)   
+                              
+    pygame.draw.polygon(SCREEN, 
+                        TRACE_COLOR,
+                        [(lat, lon - Y_DIST_COW),
+                        (lat - BASE, lon +  Y_DIST_COW),
+                        (lat + BASE, lon +  Y_DIST_COW)], 
+                        0)
 
 
 def dummy_main_loop()->None:
@@ -105,20 +114,16 @@ def dummy_main_loop()->None:
         # Display the reference image
         SCREEN.blit(scale(MANCHING_MAP, (CANVAS_X, CANVAS_Y)), (0, 0))
 
-        # Display some reference lines to get good points for the x coordinate
-        pygame.draw.line(SCREEN, 
-                         TRACE_COLOR, 
-                         (0, CANVAS_Y/2 - CANVAS_Y/24.5), 
-                         (CANVAS_X, CANVAS_Y/2 - CANVAS_Y/24.5), 
-                         2)
+        # Draw fighter jet icon
+        draw_fighter_jet(converted_coords[0], converted_coords[1], 180)
 
-        # Draw point for reference
-        pygame.draw.circle(SCREEN, BLACK, converted_coords, 5.0)
 
         if pygame.mouse.get_pressed(num_buttons=3)[0]:
             mouse_pos = pygame.mouse.get_pos()
             print(f'mouse_x : {mouse_pos[0]}\tmouse_y: {mouse_pos[1]}')
         display.update()
+    
+    pygame.quit()
 
 
 if __name__ == '__main__': 
