@@ -68,6 +68,9 @@ def draw_fighter_jet(lat : float, lon : float, true_heading : float)->None:
     Returns: 
         None
     """
+    def rotate_vector(true_heading : float): 
+        pass 
+
     pygame.draw.polygon(SCREEN, 
                         BLACK,
                         [(lat, lon - Y_DIST_COW - BORDER),
