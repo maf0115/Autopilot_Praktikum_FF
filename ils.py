@@ -5,11 +5,11 @@ from pygame.draw import circle, rect, line
 from pygame import font, Rect
 from pygame import display, RESIZABLE 
 from pygame.image import load
-from pygame.math import Vector2
+
 
 # Native pyhon imports
 from os import path
-from math import degrees, cos, atan2
+from math import acos, sin, cos, degrees, tan, pi
 
 # Images
 WINDOW_LOGO = load(path.join(".\Images", "ILS_Icon.png"))
@@ -34,17 +34,18 @@ INOP_DIST = 20
 # Horizontal reference line coordinates (HOR. FLUGWEG)
 HOR_REF_X_START = 125
 HOR_REF_X_END = 675
+MAX_GLIDE = 0.72
 
 # Vertical reference line coordinates (GLEITWINKEL)
 VER_REF_Y_START = 125
 VER_REF_Y_END =  675
 MAX_DRIFT = 2.5
 
-# FAF VADAN reference coordinates (lat, lon)
-VADAN = (11.67508056, 48.74578056)
+# FAF VADAN reference coordinates (lon, lat, heigth[m])
+VADAN = (48.74578056, 11.67508056, 2900 * 0.3048)
 
-# Runway threshold coordinates (lat, lon, heigth)
-RWY_THRESHOLD = (11.55578889, 48.71437778, 1253 * 0.3048)
+# Runway threshold coordinates (lon, lat, heigth[m])
+RWY_THRESHOLD = (48.71437778, 11.55578889, 1253 * 0.3048)
 
 # Colors
 BLACK = (0, 0, 0)
@@ -56,11 +57,32 @@ INOP_FLAG_COLOR = (255, 0, 0)
 SCREEN = display.set_mode((CANVAS_SIZE, CANVAS_SIZE), RESIZABLE)
 RUNNING = True
 
+
+# Helper functions to calculate distances
+def get_dist_in_nm(point_1, point_2):
+    dist_in_km = degrees(acos(sin(point_1[0])*sin(point_2[0]) + cos(point_1[0])*cos(point_2[0])*cos(point_2[1] - point_1[1])))
+
+    return ((dist_in_km * pi/180) * 6378.157) / 1,852
+
+def get_height_diff_in_nm(heigth_1, height_2): 
+    return 1000 * (heigth_1 - height_2) / 1852
+
+
+# Setup
 def setup_window_info()->None: 
     init()
     display.set_icon(WINDOW_LOGO)
     display.set_caption("Instrument Landing System (maf0115)")
+    
+    global ANGLE_VADAN_RWY
+    heigth_diff = get_height_diff_in_nm(VADAN[2], RWY_THRESHOLD[2])
+    cathet = get_dist_in_nm(VADAN, RWY_THRESHOLD)
 
+    ANGLE_VADAN_RWY = tan(heigth_diff/cathet)
+    print(f'ANGLE_VADAN_RWY = {ANGLE_VADAN_RWY}')
+
+
+# Drawing stuff
 def draw_ils()->None:
     SCREEN.fill(BLACK)
     circle(SCREEN, 
@@ -91,6 +113,7 @@ def draw_ils()->None:
     draw_ref_points(CENTER, 0, 1)
     draw_ref_points(CENTER, 0, -1)
 
+
 def draw_inop_flag()->None: 
     inop_rect = Rect((INOP_COORD_X + INOP_DIST, 
                       INOP_COORD_Y + INOP_DIST, 
@@ -103,21 +126,46 @@ def draw_inop_flag()->None:
     rect(SCREEN, INOP_FLAG_COLOR, inop_rect)
     SCREEN.blit(text_surface_object, text_rect)
 
+
 def draw_horizontal_reference(sim_data : list = None)->None:
-    line(SCREEN, 
-         SLOPE_INDICATOR_COLOR, 
-         (HOR_REF_X_START, CANVAS_SIZE/2), 
-         (HOR_REF_X_END, CANVAS_SIZE/2), 
-         7)
+    height_diff = get_height_diff_in_nm(sim_data, RWY_THRESHOLD)
+    cathet = get_dist_in_nm(sim_data, RWY_THRESHOLD)
+
+    aircraft_angle = tan(height_diff/cathet) 
+    
+    if abs(angle_diff := (ANGLE_VADAN_RWY - aircraft_angle)) < MAX_GLIDE:
+        line(SCREEN, 
+            SLOPE_INDICATOR_COLOR, 
+            (HOR_REF_X_START, CANVAS_SIZE/2), 
+            (HOR_REF_X_END, CANVAS_SIZE/2), 
+            6)
+    
+    else: 
+        line(SCREEN, 
+            SLOPE_INDICATOR_COLOR, 
+            (HOR_REF_X_START, 
+             angle_diff * REF_POINT_DIST * REF_POINT_AMT * CANVAS_SIZE/2), 
+            (HOR_REF_X_END, 
+             angle_diff * REF_POINT_DIST * REF_POINT_AMT * CANVAS_SIZE/2), 
+            6)
+        draw_inop_flag()
+
 
 def draw_vertical_reference(sim_data : list = None)->None:
-    def sign(num : float):
-        if num > 0: return 1
-        elif num < 0: return -1
-        else: return 0
+    # Base the angle on real life calculations: trigonometry is your friend rn
+    # How to do these calcs?
+    if sim_data[0] > RWY_THRESHOLD[0]: 
+        sign = 1
+    else: 
+        sign = -1
 
-    # BAse the angle on real life calculations: trigonometry is your friend rn
-    angle = degrees(Vector2(sim_data[1], sim_data[0]).angle_to((RWY_THRESHOLD[0], RWY_THRESHOLD[1])))
+    hypothenuse = get_dist_in_nm(sim_data, RWY_THRESHOLD) 
+
+    cathet = degrees(acos(sin(sim_data[0])*sin(sim_data[0]) + cos(sim_data[0])*cos(sim_data[0])*cos(RWY_THRESHOLD[1] - sim_data[1]))) 
+
+    cathet = ((cathet *pi/180) * 6378.157) / 1,852
+
+    angle = sign * cos(cathet/hypothenuse)
     print(f'angle: {angle}°')
 
     if abs(angle) < MAX_DRIFT: 
@@ -127,13 +175,13 @@ def draw_vertical_reference(sim_data : list = None)->None:
             SLOPE_INDICATOR_COLOR, 
             (x, VER_REF_Y_START), 
             (x, VER_REF_Y_END), 
-            7)
+            6)
     else:
         line(SCREEN, 
             SLOPE_INDICATOR_COLOR, 
             (CANVAS_SIZE/2 + REF_POINT_DIST * REF_POINT_AMT * -sign(angle), VER_REF_Y_START), 
             (CANVAS_SIZE/2 + REF_POINT_DIST * REF_POINT_AMT * -sign(angle), VER_REF_Y_END), 
-            7)
+            6)
         draw_inop_flag()
         
 
