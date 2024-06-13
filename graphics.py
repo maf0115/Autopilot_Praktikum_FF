@@ -1,4 +1,4 @@
-import pygame
+import pygame 
 from pygame import display, RESIZABLE 
 from pygame.image import load
 from pygame.transform import scale
@@ -132,4 +132,11 @@ def draw_scene(sim_data : list)->None:
 
     # Update the screen info
     display.update()
+
+if __name__ == '__main__': 
+    pygame.init()
+    setup_window_info()
+    while 1:
+        bogus = [48.7642, 11.5632, 0, 0, 0, 45]
+        draw_scene(bogus)
   

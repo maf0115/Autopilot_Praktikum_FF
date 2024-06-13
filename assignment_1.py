@@ -27,8 +27,9 @@ def monitor():
             autopilot_state = client.getDREFs("sim/cockpit/autopilot/autopilot_state")
             print("AP_State: %d", autopilot_state)
 
-            graphics.draw_scene(posi)
             # Render the screen
+            graphics.draw_scene(posi)
+            
         pygame.quit()
 
 
