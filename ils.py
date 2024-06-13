@@ -144,9 +144,9 @@ def draw_horizontal_reference(sim_data : list = None)->None:
         line(SCREEN, 
             SLOPE_INDICATOR_COLOR, 
             (HOR_REF_X_START, 
-             angle_diff * REF_POINT_DIST * REF_POINT_AMT * CANVAS_SIZE/2), 
+             -angle_diff * REF_POINT_DIST * REF_POINT_AMT * CANVAS_SIZE/2), 
             (HOR_REF_X_END, 
-             angle_diff * REF_POINT_DIST * REF_POINT_AMT * CANVAS_SIZE/2), 
+             -angle_diff * REF_POINT_DIST * REF_POINT_AMT * CANVAS_SIZE/2), 
             6)
         draw_inop_flag()
 
