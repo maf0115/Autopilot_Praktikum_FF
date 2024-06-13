@@ -117,7 +117,7 @@ def draw_vertical_reference(sim_data : list = None)->None:
         else: return 0
 
     # BAse the angle on real life calculations: trigonometry is your friend rn
-    angle = degrees(Vector2(sim_data[1], sim_data[0]).angle_to((RWY_THRESHOLD[0], RWY_THRESHOLD[1])))
+    angle = 2.7
     print(f'angle: {angle}°')
 
     if abs(angle) < MAX_DRIFT: 
