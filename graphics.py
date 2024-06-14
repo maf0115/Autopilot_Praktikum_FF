@@ -3,6 +3,8 @@ from pygame import display, RESIZABLE
 from pygame.image import load
 from pygame.transform import scale
 from pygame.math import Vector2
+from pygame import mouse 
+from pygame import Rect
 from os import path
 
 # Images
@@ -26,7 +28,7 @@ MIN_Y = (50/60, 90)
 MAX_Y = (40/60, 480)
 
 # Main window and game loop
-SCREEN = display.set_mode((CANVAS_X, CANVAS_Y), RESIZABLE)
+SCREEN = display.set_mode((CANVAS_X * 2, CANVAS_Y), RESIZABLE)
 RUNNING = True
 
 # List to keep track of the jet's trail and all of the stuff it needs as well 
@@ -34,6 +36,10 @@ TRAIL_LIST = list()
 TRAIL_MAX_LEN = 5
 TRAIL_POINT_DISTANCE = 100
 TRAIL_POINT_CNT = 0
+
+# Waypoint list
+WYP_LIST = list()
+WYP_LIST_MAX_LEN = 12
 
 # Variables to draw the fighter jet
 Y_DIST_COW = 13
@@ -109,6 +115,24 @@ def draw_trail(lat : float, lon : float)->None:
                            point, 
                            5)
 
+def draw_wyp(wyp_square): 
+    pygame.draw.rect(SCREEN,
+                     TRACE_COLOR, 
+                     wyp_square)
+
+def update_wyp_list(coords : tuple):
+    if len(WYP_LIST) < WYP_LIST_MAX_LEN:
+        WYP_LIST.append(Rect(
+            coords[0] - 3, 
+            coords[1] - 3, 
+            7,
+            7
+        )) 
+    print(f'WYP_LIST length: {len(WYP_LIST)}')
+
+def draw_wyp_list(): 
+    for wyp in WYP_LIST: 
+        draw_wyp(wyp)
 
 def draw_scene(sim_data : list)->None: 
     """
@@ -128,7 +152,9 @@ def draw_scene(sim_data : list)->None:
     draw_fighter_jet(lat, lon, sim_data[5])
 
     # Render the trail
-    draw_trail(lat, lon)
+    # draw_trail(lat, lon)
+
+    draw_wyp_list()
 
     # Update the screen info
     display.update()
