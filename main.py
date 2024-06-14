@@ -59,7 +59,3 @@ if __name__ == "__main__":
             
     monitor()
     
-    # Screnshot either bayern atlas or AIP VFR Deutschland (ETSI Ingolstad Manching, you can find it on Moodle)
-    # Put it in MS-paint 
-    # Get the pixel values of your mapped point(s)
-    # 

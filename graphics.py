@@ -3,9 +3,10 @@ from pygame import display, RESIZABLE
 from pygame.image import load
 from pygame.transform import scale
 from pygame.math import Vector2
-from pygame import mouse 
-from pygame import Rect
+from pygame import Rect, font
+
 from os import path
+ 
 
 # Images
 MANCHING_MAP = load(path.join(".\Images", "Manching.png"))
@@ -15,10 +16,12 @@ WINDOW_LOGO = load(path.join(".\Images", "WindowLogo.png"))
 CANVAS_X = MANCHING_MAP.get_width()
 CANVAS_Y = MANCHING_MAP.get_height()
 
-# Color for the trace to keep track of what pattern the aricraft flew
+# Colors 
 TRACE_COLOR = (221, 25, 224)
 BLACK = (0, 0, 0)
 FIGTHER_JET_COLOR = (150, 255, 100)
+WYP_COLOR = (235, 55, 52)
+WHITE = (255, 255, 255)
 
 # Map some coordinates to pixel values to get some reference points
 # These coordinates were obtained by clicking on some specific coordinates on the image and getting the pixel values of the mouse cursor
@@ -40,15 +43,30 @@ TRAIL_POINT_CNT = 0
 # Waypoint list
 WYP_LIST = list()
 WYP_LIST_MAX_LEN = 12
+WYP_CNT = 0
+LINE_SIZE_Y = 50
 
 # Variables to draw the fighter jet
 Y_DIST_COW = 13
 BASE = 6.5
 
+# Variables regarding wind 
+GROUND_SPEED = 100.0 * 1852.0 / 3600.0 
+
+# Put the waypoints in a class
+class Waypoint: 
+    def __init__(self, lon, lat): 
+        self.lon = lon
+        self.lat = lat
+
+        self.x , self.y = get_coordinates((self.lon, self.lat))
+
+        self.ui_wyp = Rect(lon - 3, lat - 3, 7, 7)
+
+
 def setup_window_info()->None:   
     display.set_icon(WINDOW_LOGO)
     display.set_caption("Navigation System GUI (maf0115)") 
-
 
 def get_coordinates(sim_data)->tuple:    
     # 0 is for coordinates
@@ -115,24 +133,36 @@ def draw_trail(lat : float, lon : float)->None:
                            point, 
                            5)
 
-def draw_wyp(wyp_square): 
-    pygame.draw.rect(SCREEN,
-                     TRACE_COLOR, 
-                     wyp_square)
-
 def update_wyp_list(coords : tuple):
     if len(WYP_LIST) < WYP_LIST_MAX_LEN:
-        WYP_LIST.append(Rect(
-            coords[0] - 3, 
-            coords[1] - 3, 
-            7,
-            7
-        )) 
-    print(f'WYP_LIST length: {len(WYP_LIST)}')
+        WYP_LIST.append(Waypoint(coords[0], coords[1]))
+    else: 
+        print('List full!')
 
-def draw_wyp_list(): 
+def draw_wyp_list_and_info(): 
+    cnt = 0
     for wyp in WYP_LIST: 
-        draw_wyp(wyp)
+        pygame.draw.rect(SCREEN, 
+                         WYP_COLOR, 
+                         wyp.ui_wyp)
+        display_single_wyp_data(wyp, cnt)
+        cnt += 1
+
+def display_single_wyp_data(wyp_obj, cnt): 
+    """
+    This function displays the waypoint information on the right side of the screen 
+
+    Args: 
+        None
+    Returns: 
+        None
+    """
+    y = (cnt + 1) * LINE_SIZE_Y
+    text = f'WP{WYP_CNT} -> lat: {wyp_obj.lat}     lon: {wyp_obj.lon}'
+    text_surface_object = font.SysFont('Arial', 15).render(text, True, WHITE)
+    text_rect = text_surface_object.get_rect(center = (4/3 * CANVAS_X, y))
+    SCREEN.blit(text_surface_object, text_rect)
+
 
 def draw_scene(sim_data : list)->None: 
     """
@@ -152,9 +182,9 @@ def draw_scene(sim_data : list)->None:
     draw_fighter_jet(lat, lon, sim_data[5])
 
     # Render the trail
-    # draw_trail(lat, lon)
+    draw_trail(lat, lon)
 
-    draw_wyp_list()
+    draw_wyp_list_and_info()
 
     # Update the screen info
     display.update()
