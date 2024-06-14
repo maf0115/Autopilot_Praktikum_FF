@@ -37,7 +37,7 @@ RUNNING = True
 # List to keep track of the jet's trail and all of the stuff it needs as well 
 TRAIL_LIST = list()
 TRAIL_MAX_LEN = 5
-TRAIL_POINT_DISTANCE = 100
+TRAIL_POINT_DISTANCE = 300
 TRAIL_POINT_CNT = 0
 
 # Waypoint list
@@ -55,13 +55,31 @@ GROUND_SPEED = 100.0 * 1852.0 / 3600.0
 
 # Put the waypoints in a class
 class Waypoint: 
-    def __init__(self, lon, lat): 
-        self.lon = lon
-        self.lat = lat
+    def __init__(self, x, y): 
+        self.x = x
+        self.y = y
+        self.lat = 0
+        self.lon = 0
 
-        self.x , self.y = get_coordinates((self.lon, self.lat))
+        self.ui_wyp = Rect(x - 3, y - 3, 7, 7)
 
-        self.ui_wyp = Rect(lon - 3, lat - 3, 7, 7)
+    def convert_pixels_in_coords(self, pixel_coords: tuple)->tuple:
+        """
+        Takes the pixel coordinates and converts them into real life coordinate values. 
+
+        Args: 
+            pixel_coords: coordinates in pixel values 
+        Returns: 
+            coords: the converted coordinates
+        """
+            # 0 is for coordinates
+        # 1 is for pixels 
+        lat = pixel_coords[0]
+        lon = pixel_coords[1]
+       
+        self.lon = (((lat + 11) - MAX_X[0]) / (MAX_X[1] - MIN_X[1])) * (MAX_X[0] - MIN_X[0]) + MAX_X[1]
+        self.lat = (((lon + 48) - MAX_Y[0]) / (MAX_Y[1] - MIN_Y[1])) * (MAX_Y[0] - MIN_Y[0]) + MAX_Y[1]
+        
 
 
 def setup_window_info()->None:   
@@ -69,8 +87,6 @@ def setup_window_info()->None:
     display.set_caption("Navigation System GUI (maf0115)") 
 
 def get_coordinates(sim_data)->tuple:    
-    # 0 is for coordinates
-    # 1 is for pixels 
     lat = sim_data[1]
     lon = sim_data[0]
     return(
@@ -157,6 +173,7 @@ def display_single_wyp_data(wyp_obj, cnt):
     Returns: 
         None
     """
+    wyp_obj.convert_pixels_in_coords((wyp_obj.x, wyp_obj.y))
     y = (cnt + 1) * LINE_SIZE_Y
     text = f'WP{WYP_CNT} -> lat: {wyp_obj.lat}     lon: {wyp_obj.lon}'
     text_surface_object = font.SysFont('Arial', 15).render(text, True, WHITE)
