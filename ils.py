@@ -6,10 +6,9 @@ from pygame import font, Rect
 from pygame import display, RESIZABLE 
 from pygame.image import load
 
-
 # Native pyhon imports
 from os import path
-from math import sin, asin, cos, acos, degrees, atan2, sqrt, pow, pi
+from math import degrees, atan2, sqrt, pow, pi
 
 # Images
 WINDOW_LOGO = load(path.join(".\Images", "ILS_Icon.png"))
@@ -56,18 +55,6 @@ INOP_FLAG_COLOR = (255, 0, 0)
 # Main window and game loop
 SCREEN = display.set_mode((CANVAS_SIZE, CANVAS_SIZE), RESIZABLE)
 RUNNING = True
-
-
-# Helper functions to calculate distances
-def get_dist_in_nm(point_1, point_2):
-    dist_in_km = degrees(acos(sin(point_1[0])*sin(point_2[0]) + cos(point_1[0])*cos(point_2[0])*cos(point_2[1] - point_1[1])))
-
-    return ((dist_in_km * pi/180) * 6378.157) / 1.852
-
-
-def get_height_diff_in_nm(heigth_1, height_2): 
-    return 1000 * (heigth_1 - height_2) / 1852
-
 
 def get_angle_in_height(lon_1, lat_1, h_1,
                         lon_2, lat_2, h_2):
@@ -153,7 +140,7 @@ def draw_horizontal_reference(sim_data : list = None)->None:
     
     print(f'angle_diff = {angle_diff}')
     if abs(angle_diff) < MAX_GLIDE:
-        y = CANVAS_SIZE/2 + (angle_diff / MAX_DRIFT) * -REF_POINT_DIST
+        y = CANVAS_SIZE/2 + (angle_diff / MAX_DRIFT) * REF_POINT_DIST * sign 
         line(SCREEN, 
             SLOPE_INDICATOR_COLOR, 
             (HOR_REF_X_START, y), 
@@ -164,9 +151,9 @@ def draw_horizontal_reference(sim_data : list = None)->None:
         line(SCREEN, 
             SLOPE_INDICATOR_COLOR, 
             (HOR_REF_X_START, 
-             CANVAS_SIZE/2 + REF_POINT_DIST * (REF_POINT_AMT - 0.5) * -sign), 
+             CANVAS_SIZE/2 + REF_POINT_DIST * (REF_POINT_AMT - 0.5) * sign), 
             (HOR_REF_X_END, 
-             CANVAS_SIZE/2 + REF_POINT_DIST * (REF_POINT_AMT - 0.5) * -sign), 
+             CANVAS_SIZE/2 + REF_POINT_DIST * (REF_POINT_AMT - 0.5) * sign), 
             6)
         draw_inop_flag()
 
@@ -181,13 +168,13 @@ def draw_vertical_reference(sim_data : list = None)->None:
 
     # Get the fist cathet: coordianates of the rwy
     ac = sqrt(pow((sim_data[1] - RWY_THRESHOLD[1]), 2))
-    ab = sqrt(pow((sim_data[0] - RWY_THRESHOLD[0]), 2) + pow((sim_data[1] - RWY_THRESHOLD[1]), 2))
-    angle = degrees(asin(ac/ab))
+    ab = sqrt(pow((sim_data[0] - RWY_THRESHOLD[0]), 2))
+    angle = degrees(atan2(ab, ac))
    
     print(f'angle: {angle}')
 
     if abs(angle) < MAX_DRIFT: 
-        x = CANVAS_SIZE/2 + (angle / MAX_DRIFT) * -REF_POINT_DIST
+        x = CANVAS_SIZE/2 + (angle / MAX_DRIFT) * REF_POINT_DIST * sign
         # Based on the degrees, draw the line
         line(SCREEN, 
             SLOPE_INDICATOR_COLOR, 
