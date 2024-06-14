@@ -22,7 +22,7 @@ def monitor():
             posi = client.getPOSI()
 
             ils.draw_ils()
-            ils.draw_horizontal_reference()
+            ils.draw_horizontal_reference(posi)
             ils.draw_vertical_reference(posi) 
             ils.display.update()    
         quit()
