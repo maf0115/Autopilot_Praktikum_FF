@@ -1,29 +1,34 @@
 import xpc
-import pygame
+from pygame import init, quit
+from pygame import event as ev
+from pygame import QUIT, KEYDOWN, K_ESCAPE, MOUSEBUTTONUP
+from pygame.mouse import get_pos
+import moving_map_conf as mmc
 import graphics
+
 
 def monitor():
     # Initialize pygame as the first thing
-    pygame.init()
+    init()
     graphics.setup_window_info()
 
     with xpc.XPlaneConnect() as client:
-        while graphics.RUNNING:
-            for event in pygame.event.get(): 
-                if event.type == pygame.QUIT: 
-                    graphics.RUNNING = False 
+        while mmc.RUNNING:
+            for event in ev.get(): 
+                if event.type == QUIT: 
+                    mmc.RUNNING = False 
 
                 # Events with keys
-                elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_ESCAPE:
-                        graphics.RUNNING = False
+                elif event.type == KEYDOWN:
+                    if event.key == K_ESCAPE:
+                        mmc.RUNNING = False
             # Check for events in program loop
 
-                mouse_coordinates = pygame.mouse.get_pos()  
+                mouse_coordinates = get_pos()  
 
-                if mouse_coordinates[0] <= graphics.MANCHING_MAP.get_width() and \
-                mouse_coordinates[1] <= graphics.MANCHING_MAP.get_height() and \
-                event.type == pygame.MOUSEBUTTONUP:
+                if mouse_coordinates[0] <= mmc.MANCHING_MAP.get_width() and \
+                mouse_coordinates[1] <= mmc.MANCHING_MAP.get_height() and \
+                event.type == MOUSEBUTTONUP:
                     graphics.update_wyp_list(mouse_coordinates) 
 
             posi = client.getPOSI()
@@ -36,7 +41,7 @@ def monitor():
 
             graphics.draw_scene(posi)
             # Render the screen
-        pygame.quit()
+        quit()
 
 
 
