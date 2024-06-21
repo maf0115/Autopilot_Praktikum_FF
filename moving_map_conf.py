@@ -48,7 +48,6 @@ WYP_CONNECTION_LIST_MAX_LEN = WYP_LIST_MAX_LEN - 1
 WYP_CONNECTION_CNT = 0
 
 # Variables to keep track of the text lines
-TXT_LIST = list()
 WYP_INFO_LINE_SIZE_Y = 25
 TXT_CNT = 0
 TXT_TAB = '   '
@@ -70,4 +69,7 @@ BOG_PITCH = 0
 BOG_ROLL = 0
 BOG_YAW = uniform(0, 359)
 TICK_CNT = 0
+
+# Autopilot
+CURRENT_CONNECTION_INDEX = 0
 
