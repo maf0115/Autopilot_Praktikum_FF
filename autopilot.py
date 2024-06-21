@@ -39,8 +39,22 @@ def set_rwk_to_fly(jet_posi)->float:
 
     '''
     if more than one waypoint was marked:
-        create a connection between the jet and the latest connection finish point
+        create a connection between the jet and the finish waypoint of the latest connection in WYP_CONNECTION_LIST
         send a data ref to adjust the rwk to this connection
+    
+    if only ONE waypoint was programmed: 
+        create a connection between the jet and the only waypoint in WYP_LIST
+    
+    if no waypoints were put in the list: 
+        do nothing 
+    
+    if the distance of the jet fits the marked destination point in the connection: 
+        switch to the newer connection as a reference 
+    
+    else:
+        stay on path
+        
+        
     
     ''' 
         
@@ -50,7 +64,7 @@ def set_rwk_to_fly(jet_posi)->float:
             current_connection = Connection(Waypoint(jet_posi[0], jet_posi[1]), mmc.WYP_CONNECTION_LIST[mmc.CURRENT_CONNECTION_INDEX].finish)
 
             # How do I define a circle area?  
-            if get_projection(jet_posi, mmc.WYP_CONNECTION_LIST[mmc.CURRENT_CONNECTION_INDEX]) < 50: 
+            if get_projection(jet_posi, mmc.WYP_CONNECTION_LIST[mmc.CURRENT_CONNECTION_INDEX]) < 150: 
                 try:  
                     mmc.CURRENT_CONNECTION_INDEX += 1
                     client.sendDREF("sim/cockpit2/autopilot/heading_dial_deg_mag_pilot", mmc.WYP_CONNECTION_LIST[mmc.CURRENT_CONNECTION_INDEX].get_rwk())
