@@ -108,13 +108,10 @@ def draw_trail(lat : float, lon : float)->None:
 
     # Render the points
     for point in mmc.TRAIL_LIST: 
-        circle(mmc.SCREEN,
-                           mmc.TRACE_COLOR, 
-                           point, 
-                           5)
+        circle(mmc.SCREEN,mmc.TRACE_COLOR, point, 5)
 
 
-def display_data():
+def display_wyp_data():
     """
     This function displays information about the passed object on the right side of the screen
 
@@ -124,11 +121,31 @@ def display_data():
     Returns: 
         None
     """ 
-    if len(mmc.TXT_LIST) > 0:
+    if len(mmc.WYP_LIST) > 0:
         mmc.TXT_CNT = 0
-        for text in mmc.TXT_LIST:
-            y = (mmc.TXT_CNT + 0.5) * mmc.WYP_INFO_LINE_SIZE_Y
-            text_surface_object = font.SysFont('Arial', 15).render(text, False, mmc.WHITE)
+        for wyp in mmc.WYP_LIST:
+            y = (2*mmc.TXT_CNT + 1) * mmc.WYP_INFO_LINE_SIZE_Y
+            text_surface_object = font.SysFont('Arial', 15).render(wyp.data, False, mmc.WYP_COLOR)
+            text_rect = text_surface_object.get_rect(center = (4/3 * mmc.CANVAS_X + 50, y))
+            mmc.TXT_CNT += 1
+        mmc.SCREEN.blit(text_surface_object, text_rect)
+
+
+def display_connection_data():
+    """
+    This function displays information about the passed object on the right side of the screen
+
+    Args: 
+        wyp_obj: the waypoint object of which data needs to be displayed
+        txt_color: the color that the text should be displayed in. Varies between waypoint and connection text
+    Returns: 
+        None
+    """ 
+    if len(mmc.WYP_CONNECTION_LIST) > 0:
+        mmc.TXT_CNT = 0
+        for connection in mmc.WYP_CONNECTION_LIST:
+            y = (2*mmc.TXT_CNT + 2) * mmc.WYP_INFO_LINE_SIZE_Y
+            text_surface_object = font.SysFont('Arial', 15).render(connection.data, False, mmc.CONNECTION_COLOR)
             text_rect = text_surface_object.get_rect(center = (4/3 * mmc.CANVAS_X + 50, y))
             mmc.TXT_CNT += 1
         mmc.SCREEN.blit(text_surface_object, text_rect)
@@ -140,8 +157,6 @@ def update_wyp_list(coords : tuple)->None:
     if len(mmc.WYP_LIST) < mmc.WYP_LIST_MAX_LEN:
         tmp = Waypoint(coords[0], coords[1])
         tmp.set_wyp_info()
-        data = tmp.data
-        mmc.TXT_LIST.append(data)
         mmc.WYP_LIST.append(tmp)
     else: 
         print('List full!')
@@ -168,9 +183,7 @@ def update_wyp_connection_list()->None:
     This function updates the list of connections between waypoints. 
 
     Args: 
-        wyp_a: The starting waypoint 
-        wyp_b: The end waypoint
-
+        None
     Returns: 
         None
     """ 
@@ -178,9 +191,7 @@ def update_wyp_connection_list()->None:
         # Get the waypoints only if the list is big enough 
         tmp = Connection(mmc.WYP_LIST[-2], mmc.WYP_LIST[-1])
         # Update the information of this connection by accessing the list
-        tmp.set_connection_info()
-        data = tmp.data
-        mmc.TXT_LIST.append(data)        
+        tmp.set_connection_info()       
         mmc.WYP_CONNECTION_LIST.append(tmp)
 
 
@@ -222,9 +233,12 @@ def draw_scene(sim_data : list)->None:
     # Render the trail
     draw_trail(lat, lon)
 
-    draw_wypts()
     draw_connections()
-    display_data()
+    display_connection_data()
+
+    draw_wypts()
+    display_wyp_data()
+    
 
     # Update the screen info
     display.update()
