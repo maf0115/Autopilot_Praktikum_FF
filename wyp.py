@@ -1,13 +1,13 @@
 # Put the waypoints in a class
 from pygame import Rect
 import moving_map_conf as mmc
-from math import sin, asin, cos, acos, atan2, radians, degrees, pow, sqrt, pi
+from math import sin, asin, cos, acos, atan2, degrees, pow, sqrt, pi
 
 class Waypoint: 
     def __init__(self, x, y): 
         self.pixel_coords = (x, y)
 
-        self.ui_wyp = Rect(x - 3, y - 3, 7, 7)
+        self.ui_wyp = Rect(x - 3, y - 3, 10, 10)
         self.data = str()
         self.index = mmc.WYP_CNT
         mmc.WYP_CNT += 1
@@ -18,9 +18,14 @@ class Waypoint:
 
         self.gps_coords = (lon, lat)
 
+    def get_lat(self):
+        return self.gps_coords[1] 
+    
+    def get_lon(self): 
+        return self.gps_coords[0]
 
     def set_wyp_info(self):
-        self.data = f'WP{self.index} -> lat: {self.gps_coords[1]}{mmc.TXT_TAB}lon: {self.gps_coords[0]}'
+        self.data = f'WP{self.index} -> lat: {str(self.get_lat())[:7]}{mmc.TXT_TAB}lon: {str(self.get_lon())[:7]}'
 
 
 class Connection: 
@@ -47,12 +52,9 @@ class Connection:
         Returns: 
             distance in float
         """
-        start = self.start.gps_coords
-        finish = self.finish.gps_coords
+        hypothenuse = sqrt(pow(self.start.get_lon() - self.finish.get_lon(), 2) + pow(self.start.get_lat() - self.finish.get_lat(), 2))
 
-        bearing = acos(sin(start[0]) * sin(finish[0]) + cos(start[0]) * cos(finish[0]) * cos(finish[1] - start[1]))
-
-        self.distance = (bearing * pi/180) * 6378.137/1.852
+        self.distance = hypothenuse * 60
 
 
     def get_rwk(self)->None: 
@@ -66,27 +68,29 @@ class Connection:
         """
         # THERE IS AN ERROR IN THE LOGIC; FIX IT!!!!!!        
 
-        if (self.start.gps_coords[0] - self.finish.gps_coords[0]) == 0.0 and \
-            (self.start.gps_coords[1] - self.finish.gps_coords[1]) > 0.0:
+        if (self.start.get_lon() - self.finish.get_lon()) == 0.0 and \
+            (self.start.get_lat() - self.finish.get_lat()) > 0.0:
             self.rwk = 270.0
         
-        elif (self.start.gps_coords[0] - self.finish.gps_coords[0]) == 0.0 and \
-            (self.start.gps_coords[1] - self.finish.gps_coords[1]) < 0.0:
+        elif (self.start.get_lon() - self.finish.get_lon()) == 0.0 and \
+            (self.start.get_lat() - self.finish.get_lat()) < 0.0:
             self.rwk = 90.0
 
-        elif (self.start.gps_coords[0] - self.finish.gps_coords[0]) > 0.0 and \
-            (self.start.gps_coords[1] - self.finish.gps_coords[1]) == 0.0:
+        elif (self.start.get_lon() - self.finish.get_lon()) > 0.0 and \
+            (self.start.get_lat() - self.finish.get_lat()) == 0.0:
             self.rwk = 180.0
 
-        elif (self.start.gps_coords[0] - self.finish.gps_coords[0]) < 0.0 and \
-            (self.start.gps_coords[1] - self.finish.gps_coords[1]) == 0.0:
+        elif (self.start.get_lon() - self.finish.get_lon()) < 0.0 and \
+            (self.start.get_lat() - self.finish.get_lat()) == 0.0:
             self.rwk = 0.0
 
-        elif (self.start.gps_coords[0] - self.finish.gps_coords[0]) < 0.0: 
-            self.rwk = degrees(pi/2.0 - atan2((self.start.gps_coords[1] - self.finish.gps_coords[1])*60.0*1852.0, (self.start.gps_coords[0] - self.finish.gps_coords[0])*cos(radians(self.start.gps_coords[1]*60.0*1852.0))))
+        dx = self.finish.get_lon() - self.start.get_lon()
+        dy = self.finish.get_lat() - self.start.get_lat()
 
-        elif (self.start.gps_coords[0] - self.finish.gps_coords[0]) > 0.0: 
-            self.rwk = degrees(3.0/pi*2.0 - atan2((self.start.gps_coords[1] - self.finish.gps_coords[1])*60.0*1852.0, (self.start.gps_coords[0] - self.finish.gps_coords[0])*cos(radians(self.start.gps_coords[1]*60.0*1852.0))))        
+        rads = atan2(-dy, dx)
+        rads %= 2*pi
+        self.rwk = 360 - degrees(rads)
+     
 
 
     def get_beta(self)->float:
@@ -121,6 +125,6 @@ class Connection:
         self.data = f'Start: WP{self.start.index}; End: WP{self.finish.index}{mmc.TXT_TAB}'
         self.data += f'Distance: {str(self.distance)[:7]}NM{mmc.TXT_TAB}'
         self.data += f'RWK: {str(self.rwk)[:7]}°{mmc.TXT_TAB}'
-        self.data += f'ETA: {self.time}h'
+        self.data += f'ETA: {str(self.time)[:7]}h'
 
         

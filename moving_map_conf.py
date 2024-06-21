@@ -16,7 +16,8 @@ CANVAS_Y = MANCHING_MAP.get_height()
 TRACE_COLOR = (221, 25, 224)
 BLACK = (0, 0, 0)
 FIGTHER_JET_COLOR = (150, 255, 100)
-WYP_COLOR = (235, 55, 52)
+WYP_COLOR = (8, 252, 252)
+CONNECTION_COLOR = (255, 0, 0)
 WHITE = (255, 255, 255)
 
 # Map some coordinates to pixel values to get some reference points

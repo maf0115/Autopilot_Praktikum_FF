@@ -132,7 +132,7 @@ def display_data():
             text_rect = text_surface_object.get_rect(center = (4/3 * mmc.CANVAS_X + 50, y))
             mmc.TXT_CNT += 1
         mmc.SCREEN.blit(text_surface_object, text_rect)
-        print(mmc.TXT_LIST)
+
 
 # WAYPOINTS
 
@@ -196,7 +196,7 @@ def draw_connections()->None:
     """ 
     for connection in mmc.WYP_CONNECTION_LIST: 
         line(mmc.SCREEN, 
-             mmc.WYP_COLOR, 
+             mmc.CONNECTION_COLOR, 
              connection.start.pixel_coords, 
              connection.finish.pixel_coords,
              5)
@@ -241,6 +241,7 @@ def moving_map_test_main()->None:
     """
 
     init()
+    setup_window_info()
     while mmc.RUNNING:
         for event in ev.get(): 
             if event.type == QUIT: 

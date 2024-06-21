@@ -29,7 +29,9 @@ def monitor():
                 if mouse_coordinates[0] <= mmc.MANCHING_MAP.get_width() and \
                 mouse_coordinates[1] <= mmc.MANCHING_MAP.get_height() and \
                 event.type == MOUSEBUTTONUP:
+                    mmc.TXT_CNT += 1
                     graphics.update_wyp_list(mouse_coordinates) 
+                    graphics.update_wyp_connection_list()
 
             posi = client.getPOSI()
 
