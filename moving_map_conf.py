@@ -50,13 +50,16 @@ WYP_CONNECTION_CNT = 0
 TXT_LIST = list()
 WYP_INFO_LINE_SIZE_Y = 25
 TXT_CNT = 0
+TXT_TAB = '   '
 
 # Variables to draw the fighter jet
 Y_DIST_COW = 13
 BASE = 6.5
 
 # Variables regarding wind 
-GROUND_SPEED = 100.0 * 1852.0 / 3600.0 
+WIND_SPEED = 10.0 * 1852.0 / 3600.0 
+WD = 180.0
+WIND_DIRECTION = (WD+ 180) % 360
 
 # Variables to keep track of bogus data
 BOG_LAT = uniform(11.0 + 29/60, 11.0 + 35/60)
