@@ -5,6 +5,7 @@ from pygame import QUIT, KEYDOWN, K_ESCAPE, MOUSEBUTTONUP
 from pygame.mouse import get_pos
 import moving_map_conf as mmc
 import graphics
+import autopilot
 
 
 def monitor():
@@ -42,6 +43,7 @@ def monitor():
             # print("AP_State: %d", autopilot_state)
 
             graphics.draw_scene(posi)
+            autopilot.set_rwk_to_fly(posi)
             # Render the screen
         quit()
 
@@ -58,7 +60,7 @@ if __name__ == "__main__":
     client = xpc.XPlaneConnect()
 
     # Execute
-    client.sendDREF(dref1, 120.0)
+    client.sendDREF(dref1, 180.0)
     value = 512+16384
     client.sendDREF(dref2, value)
     # Cleanup
