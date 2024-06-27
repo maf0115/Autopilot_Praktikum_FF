@@ -8,7 +8,7 @@ from pygame.image import load
 
 # Native pyhon imports
 from os import path
-from math import degrees, atan2, sqrt, pow, pi
+from math import degrees, radians, cos, atan2, sqrt, pow, pi
 
 # Images
 WINDOW_LOGO = load(path.join(".\Images", "ILS_Icon.png"))
@@ -59,13 +59,12 @@ RUNNING = True
 def get_angle_in_height(lon_1, lat_1, h_1,
                         lon_2, lat_2, h_2):
     # Get height difference between the two points in km
-    height_diff = (h_2 - h_1) / 1000
+    height_diff = (h_2 - h_1) / 1000.0
 
     # Get distance between the two points from a bird's eye view (b.e.v.) and convert it in km
-    dist_bev = sqrt((lat_1 - lat_2)*(lat_1 - lat_2) + (lon_1 - lon_2)*(lon_1 - lon_2))
-    dist_bev = (dist_bev * pi/180) * 6378.157
+    dist_bev = sqrt(pow((lat_1 - lat_2) * 60 * 1.852, 2) + pow((lon_1 - lon_2)*cos(radians(lat_1)) * 60 * 1.852, 2))
 
-    return degrees(atan2(height_diff, dist_bev))
+    return degrees(atan2(dist_bev, height_diff))
 
 # Setup
 def setup_window_info()->None: 
@@ -75,7 +74,12 @@ def setup_window_info()->None:
     
     global ANGLE_VADAN_RWY
 
-    ANGLE_VADAN_RWY = get_angle_in_height(VADAN[0],VADAN[1], VADAN[2], RWY_THRESHOLD[0], RWY_THRESHOLD[1], RWY_THRESHOLD[2])
+    ANGLE_VADAN_RWY = get_angle_in_height(VADAN[0], 
+                                          VADAN[1], 
+                                          VADAN[2],
+                                          RWY_THRESHOLD[0],
+                                          RWY_THRESHOLD[1],
+                                          RWY_THRESHOLD[2])
 
     print(f'ANGLE_VADAN_RWY = {ANGLE_VADAN_RWY}')
 
@@ -167,8 +171,8 @@ def draw_vertical_reference(sim_data : list = None)->None:
         sign = -1
 
     # Get the fist cathet: coordianates of the rwy
-    ac = sqrt(pow((sim_data[1] - RWY_THRESHOLD[1]), 2))
-    ab = sqrt(pow((sim_data[0] - RWY_THRESHOLD[0]), 2))
+    ac = sqrt(pow((sim_data[1] - RWY_THRESHOLD[1]) * cos(radians(sim_data[0])) * 60 * 1.852, 2))
+    ab = sqrt(pow((sim_data[0] - RWY_THRESHOLD[0]) * 60 * 1.852, 2))
     angle = degrees(atan2(ab, ac))
    
     print(f'angle: {angle}')
