@@ -5,7 +5,7 @@ from wyp import Waypoint, Connection
 import moving_map_conf as mmc 
 import xpc
 
-from math import pow, sqrt
+from math import pow, sqrt, cos, radians
 import numpy as np
 
 def vec_abs(vec):
@@ -25,6 +25,17 @@ def get_projection(jet_posi, connection : Connection)->float:
     denominator = vec_abs(b)
 
     return numerator / denominator
+
+def check_if_flown_by(jet_posi, wyp_reference)->bool:
+    """
+    This function checks if the fighter jet gets past a chosen waypoint by calculating the distance
+    """ 
+    distance = sqrt(pow((jet_posi[1] - wyp_reference.get_lat()) * 60.0, 2) + \
+                    pow((jet_posi[0] - wyp_reference.get_lon())*cos(radians(jet_posi[1])) * 60.0, 2))
+    
+
+    if distance < mmc.PASSED_WYP_DISTANCE: return True 
+    else: return False
 
 
 def set_rwk_to_fly(jet_posi)->float: 
@@ -57,7 +68,24 @@ def set_rwk_to_fly(jet_posi)->float:
         
     
     ''' 
+    with xpc.XPlaneConnect() as client:
+        if mmc.WYP_LIST:
+            if len(mmc.WYP_LIST) >=2: 
+                tmp_connection = Connection(Waypoint(jet_posi[0], jet_posi[1]), 
+                                            mmc.WYP_LIST[-1])
+                
+            else: 
+                tmp_connection = Connection(Waypoint(jet_posi[0], jet_posi[1]), 
+                                            mmc.WYP_LIST[0])
         
+            check_if_flown_by()
+
+        else: 
+            print("No waypoint to correct flight trajectory towards")
+        
+        pass
+
+
 
     with xpc.XPlaneConnect() as client:
         if len(mmc.WYP_CONNECTION_LIST) >= 1: 
