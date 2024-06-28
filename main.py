@@ -12,6 +12,7 @@ def monitor():
     # Initialize pygame as the first thing
     init()
     graphics.setup_window_info()
+    auto = autopilot.Autopilot()
 
     with xpc.XPlaneConnect() as client:
         while mmc.RUNNING:
@@ -43,8 +44,8 @@ def monitor():
             # print("AP_State: %d", autopilot_state)
 
             graphics.draw_scene(posi)
-            autopilot.set_rwk_to_fly(posi)
-            # Render the screen
+            auto.get_current_wyp()
+            auto.set_rwk_to_fly(posi)
         quit()
 
 

@@ -4,11 +4,11 @@ import moving_map_conf as mmc
 from math import sin, asin, cos, radians, atan2, degrees, pow, sqrt, pi
 
 class Waypoint: 
-    def __init__(self, x, y): 
+    def __init__(self, x = 0.0, y = 0.0): 
         self.pixel_coords = (x, y)
 
         self.ui_wyp = Rect(x - 3, y - 3, 10, 10)
-        self.data = str()
+        self.data = ''
         self.index = mmc.WYP_CNT
         mmc.WYP_CNT += 1
 
@@ -52,8 +52,7 @@ class Connection:
         Returns: 
             distance in float
         """
-        self.distance = sqrt(pow((self.start.get_lat() - self.finish.get_lat()) * 60.0, 2) + \
-                             pow((self.start.get_lon()-self.finish.get_lon())*cos(radians(self.start.get_lat())) * 60.0, 2))
+        self.distance = sqrt(pow((self.start.get_lat() - self.finish.get_lat()) * 60.0, 2) + pow((self.start.get_lon()-self.finish.get_lon())*cos(radians(self.start.get_lat())) * 60.0, 2))
         return self.distance
 
 
@@ -67,30 +66,33 @@ class Connection:
             None
         """
         # THERE IS AN ERROR IN THE LOGIC; FIX IT!!!!!!        
-
-        if (self.start.get_lon() - self.finish.get_lon()) == 0.0 and \
-            (self.start.get_lat() - self.finish.get_lat()) > 0.0:
-            self.rwk = 270.0
+        if type(self.start) == None or type(self.finish) == None: 
+            return None
         
-        elif (self.start.get_lon() - self.finish.get_lon()) == 0.0 and \
-            (self.start.get_lat() - self.finish.get_lat()) < 0.0:
-            self.rwk = 90.0
+        else:
+            if (self.start.get_lon() - self.finish.get_lon()) == 0.0 and \
+                (self.start.get_lat() - self.finish.get_lat()) > 0.0:
+                self.rwk = 270.0
+            
+            elif (self.start.get_lon() - self.finish.get_lon()) == 0.0 and \
+                (self.start.get_lat() - self.finish.get_lat()) < 0.0:
+                self.rwk = 90.0
 
-        elif (self.start.get_lon() - self.finish.get_lon()) > 0.0 and \
-            (self.start.get_lat() - self.finish.get_lat()) == 0.0:
-            self.rwk = 180.0
+            elif (self.start.get_lon() - self.finish.get_lon()) > 0.0 and \
+                (self.start.get_lat() - self.finish.get_lat()) == 0.0:
+                self.rwk = 180.0
 
-        elif (self.start.get_lon() - self.finish.get_lon()) < 0.0 and \
-            (self.start.get_lat() - self.finish.get_lat()) == 0.0:
-            self.rwk = 0.0
+            elif (self.start.get_lon() - self.finish.get_lon()) < 0.0 and \
+                (self.start.get_lat() - self.finish.get_lat()) == 0.0:
+                self.rwk = 0.0
 
-        dx = self.finish.get_lon() - self.start.get_lon()
-        dy = self.finish.get_lat() - self.start.get_lat()
+            dx = (self.finish.get_lon() - self.start.get_lon()) * cos(radians((self.finish.get_lat() + self.start.get_lat())) / 2.0)
+            dy = self.finish.get_lat() - self.start.get_lat()
 
-        rads = atan2(-dy, dx)
-        rads %= 2*pi
-        self.rwk = 360 - degrees(rads)
-        return self.rwk
+            rads = atan2(-dy, dx)
+            rads %= 2*pi
+            self.rwk = 360 - degrees(rads)
+            return self.rwk
      
 
 

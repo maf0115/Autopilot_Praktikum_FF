@@ -5,117 +5,135 @@ from wyp import Waypoint, Connection
 import moving_map_conf as mmc 
 import xpc
 
-from math import pow, sqrt, cos, radians
+from math import pow, sqrt, sin, cos, radians, atan2, degrees, pi
 import numpy as np
 
-def vec_abs(vec):
-    somma = 0
-    for elem in vec:
-        somma += pow(elem, 2)
-    return sqrt(somma)
+
+class Autopilot:
+    def __init__(self): 
+        self.current_wyp = Waypoint()
+        self.wyp_flown_over_cnt = 0
+        self.flown_over = False
 
 
-def get_projection(jet_posi, connection : Connection)->float: 
-    jet_posi = np.array([jet_posi[0], jet_posi[1]])
-    a = np.array([connection.start.get_lon(), connection.start.get_lat()])
-    b = np.array([connection.finish.get_lon(), connection.finish.get_lat()])
-
-    tmp = jet_posi - a
-    numerator = tmp[0]*b[1] - tmp[1]*b[0]
-    denominator = vec_abs(b)
-
-    return numerator / denominator
-
-def check_if_flown_by(jet_posi, wyp_reference)->bool:
-    """
-    This function checks if the fighter jet gets past a chosen waypoint by calculating the distance
-    """ 
-    distance = sqrt(pow((jet_posi[1] - wyp_reference.get_lat()) * 60.0, 2) + \
-                    pow((jet_posi[0] - wyp_reference.get_lon())*cos(radians(jet_posi[1])) * 60.0, 2))
-    
-
-    if distance < mmc.PASSED_WYP_DISTANCE: return True 
-    else: return False
+    def vec_abs(self, vec):
+        somma = 0
+        for elem in vec:
+            somma += pow(elem, 2)
+        return sqrt(somma)
 
 
-def set_rwk_to_fly(jet_posi)->float: 
-    """
-    This function sets the trajectory or the simulated cessna to fly.
+    def get_projection(self, jet_posi, connection : Connection)->float: 
+        jet_posi = np.array([jet_posi[0], jet_posi[1]])
+        a = np.array([connection.start.get_lon(), connection.start.get_lat()])
+        b = np.array([connection.finish.get_lon(), connection.finish.get_lat()])
 
-    Args: 
-        None
-    Returns: 
-        correction: the angle the cessna needs to "correct" its trajectory towards while flying
-    """
+        tmp = jet_posi - a
+        numerator = tmp[0]*b[1] - tmp[1]*b[0]
+        denominator = self.vec_abs(b)
 
-    '''
-    if more than one waypoint was marked:
-        create a connection between the jet and the finish waypoint of the latest connection in WYP_CONNECTION_LIST
-        send a data ref to adjust the rwk to this connection
-    
-    if only ONE waypoint was programmed: 
-        create a connection between the jet and the only waypoint in WYP_LIST
-    
-    if no waypoints were put in the list: 
-        do nothing 
-    
-    if the distance of the jet fits the marked destination point in the connection: 
-        switch to the newer connection as a reference 
-    
-    else:
-        stay on path
+        return self.vec_abs(numerator) / denominator
+
+    def get_dist_from_current_waypoint_in_km(self, jet_posi)->float:
+        R = 6371.0
+        d_lat = radians(self.current_wyp.get_lat() - jet_posi[1])
+        d_lon = radians(self.current_wyp.get_lon() - jet_posi[0])
+
+        a = sin(d_lat / 2) * sin(d_lat / 2) + cos(radians(jet_posi[1])) * sin(d_lon / 2) * sin(d_lon / 2)
+        c = 2 * atan2(sqrt(a), sqrt(1 - a))
+        return R * c
+
+
+        # return sqrt(pow((jet_posi[1] - self.current_wyp.get_lat()) * 60.0 * 1.852, 2) + pow((jet_posi[0]-self.current_wyp.get_lon())*cos(radians(jet_posi[1])) * 60.0 * 1.852, 2))
+
+
+    def get_current_wyp(self): 
+        """
+        This function gets the current waypoint to fly towards, since there is no official function or decent logic to do that yet
+        """
         
-        
-    
-    ''' 
-    with xpc.XPlaneConnect() as client:
+        # if the waypoint list contains elements: 
         if mmc.WYP_LIST:
-            if len(mmc.WYP_LIST) >=2: 
-                tmp_connection = Connection(Waypoint(jet_posi[0], jet_posi[1]), 
-                                            mmc.WYP_LIST[-1])
-                
+            # if the waypoint list has only one element: 
+            if len(mmc.WYP_LIST) < 2: 
+                # return element with index 0
+                self.current_wyp = mmc.WYP_LIST[0]
+
+            # if waypoint list has more than one element: 
             else: 
-                tmp_connection = Connection(Waypoint(jet_posi[0], jet_posi[1]), 
-                                            mmc.WYP_LIST[0])
-        
-            check_if_flown_by()
+                # check which waypoint you have already flown over and get the next waypoint in line by using self.wyp_flown_over_cnt as a reference
+                try: 
+                    print(f'wyp_flown_over_cnt = {self.wyp_flown_over_cnt}')
+                    self.current_wyp = mmc.WYP_LIST[self.wyp_flown_over_cnt]
+                except Exception as e:
+                    if e == IndexError: 
+                        print("Last waypoint of the list reached")
+                    else: 
+                        raise e
 
-        else: 
-            print("No waypoint to correct flight trajectory towards")
-        
-        pass
-
-
-
-    with xpc.XPlaneConnect() as client:
-        if len(mmc.WYP_CONNECTION_LIST) >= 1: 
-            current_connection = Connection(Waypoint(jet_posi[0], jet_posi[1]), mmc.WYP_CONNECTION_LIST[mmc.CURRENT_CONNECTION_INDEX].finish)
-
-            # How do I define a circle area?  
-            if get_projection(jet_posi, mmc.WYP_CONNECTION_LIST[mmc.CURRENT_CONNECTION_INDEX]) < 150: 
-                try:  
-                    mmc.CURRENT_CONNECTION_INDEX += 1
-                    client.sendDREF("sim/cockpit2/autopilot/heading_dial_deg_mag_pilot", mmc.WYP_CONNECTION_LIST[mmc.CURRENT_CONNECTION_INDEX].get_rwk())
-                except: 
-                    client.sendDREF("sim/cockpit2/autopilot/heading_dial_deg_mag_pilot", current_connection.get_rwk())
-        
         else:
-            if len(mmc.WYP_LIST) > 0: 
-                current_connection = Connection(Waypoint(jet_posi[0], jet_posi[1]), mmc.WYP_LIST[0])
-                client.sendDREF("sim/cockpit2/autopilot/heading_dial_deg_mag_pilot", current_connection.get_rwk())
-            else:
-                print('Flying without direction')
+        # if no waypoint was marked yet, return nothing 
+            print("No waypoint to fly towards yet")
 
+    def get_rwk_from_jet(self, jet_posi)->float: 
+        
+        if (jet_posi[0] - self.current_wyp.get_lon()) == 0.0 and \
+            (jet_posi[1] - self.current_wyp.get_lat()) > 0.0:
+            self.rwk = 270.0
+        
+        elif (jet_posi[0] - self.current_wyp.get_lon()) == 0.0 and \
+            (jet_posi[1] - self.current_wyp.get_lat()) < 0.0:
+            self.rwk = 90.0
+
+        elif (jet_posi[0] - self.current_wyp.get_lon()) > 0.0 and \
+            (jet_posi[1] - self.current_wyp.get_lat()) == 0.0:
+            self.rwk = 180.0
+
+        elif (jet_posi[0] - self.current_wyp.get_lon()) < 0.0 and \
+            (jet_posi[1] - self.current_wyp.get_lat()) == 0.0:
+            self.rwk = 0.0
+
+        dx = self.current_wyp.get_lon() - jet_posi[0]
+        # dx = (self.finish.get_lon() - self.start.get_lon()) * cos(radians((self.finish.get_lat() + self.start.get_lat())) / 2.0)
+        dy = self.current_wyp.get_lat() - jet_posi[1]
+
+        rads = atan2(-dy, dx)
+        rads %= 2*pi
+        return 360 - degrees(rads)
+
+
+    def flown_over_current_wyp(self, jet_posi)->bool:      
+        """
+        Checks if the fighter jet flew over the current waypoint
+        
+        Args: 
+            jet_posi: simulation data
+
+        Returns: 
+            Either True or False
+        """ 
+        dist = self.get_dist_from_current_waypoint_in_km(jet_posi)
+        print(f'dist = {dist}')
+
+        if dist < mmc.PASSED_WYP_DISTANCE: 
+            self.wyp_flown_over_cnt += 1
+
+
+    def set_rwk_to_fly(self, jet_posi)->float:
+        with xpc.XPlaneConnect() as client:
+            self.get_current_wyp()
+                  
+            rwk = self.get_rwk_from_jet(jet_posi)
+            print(f'rwk = {rwk}')
             
+            client.sendDREF("sim/cockpit2/autopilot/heading_dial_deg_mag_pilot", rwk)
 
-    # if that is not the case, do nothing
-
-if __name__ == '__main__': 
-    a = np.array([5, 6, 7])
-    b = np.array([2, 3, 4])
-
-    print(vec_abs(a))
-    print(vec_abs(b))
+            if self.flown_over_current_wyp(jet_posi) and not self.flown_over: 
+                self.wyp_flown_over_cnt += 1
+                self.flown_over = True
+            
+            else: 
+                self.flown_over = False
 
 
 
