@@ -94,12 +94,15 @@ class Autopilot:
             self.rwk = 0.0
 
         dx = self.current_wyp.get_lon() - jet_posi[0]
-        # dx = (self.finish.get_lon() - self.start.get_lon()) * cos(radians((self.finish.get_lat() + self.start.get_lat())) / 2.0)
+        dx = (self.current_wyp.get_lon() - jet_posi[0]) * cos(radians((self.current_wyp.get_lat() + jet_posi[1])) / 2.0)
         dy = self.current_wyp.get_lat() - jet_posi[1]
 
         rads = atan2(-dy, dx)
         rads %= 2*pi
-        return 360 - degrees(rads)
+        rwk = 360 - degrees(rads)
+
+        print(f'rwk = {rwk}')
+        return rwk
 
 
     def flown_over_current_wyp(self, jet_posi)->bool:      

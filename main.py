@@ -35,17 +35,12 @@ def monitor():
                     graphics.update_wyp_list(mouse_coordinates) 
                     graphics.update_wyp_connection_list()
 
-            posi = client.getPOSI()
-
-            # print("Loc: (%4f, %4f, %4f) Attitude (P %4f) (R %4f) (Y %4f)\n"
-               # % (posi[0], posi[1], posi[2], posi[3] , posi[4], posi[5]))
-               
-            autopilot_state = client.getDREFs("sim/cockpit/autopilot/autopilot_state")
-            # print("AP_State: %d", autopilot_state)
+            # posi = client.getPOSI()
+            posi = graphics.bogus_data()
 
             graphics.draw_scene(posi)
             auto.get_current_wyp()
-            auto.set_rwk_to_fly(posi)
+            # auto.set_rwk_to_fly(posi)
         quit()
 
 

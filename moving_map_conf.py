@@ -59,7 +59,7 @@ BASE = 6.5
 # Variables regarding wind 
 WIND_SPEED = 10.0 * 1852.0 / 3600.0 
 WD = 180.0
-WIND_DIRECTION = (WD+ 180) % 360
+WIND_DIRECTION = (WD + 180) % 360
 
 # Variables to keep track of bogus data
 BOG_LAT = uniform(11.0 + 29/60, 11.0 + 35/60)

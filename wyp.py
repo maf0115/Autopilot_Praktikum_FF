@@ -37,7 +37,7 @@ class Connection:
         mmc.WYP_CONNECTION_CNT += 1
 
         # Data regarding assignment 3 
-        self.gs = 100.0 * 1852.0 / 3600.0
+        self.gs = 100.0 * 1852.0 / 3600.0 # m/s
         self.time = float
         self.verbose_time = str
         self.rwk = float
@@ -95,7 +95,6 @@ class Connection:
             return self.rwk
      
 
-
     def get_beta(self)->float:
         return mmc.WIND_DIRECTION - self.rwk * pi/180
     
@@ -112,7 +111,8 @@ class Connection:
         self.time = abs(self.distance * 1852)/abs(self.get_ground_speed()) 
 
     def convert_time_to_verbose(self)->str:
-        self.verbose_time = '{0:02.0f}:{1:02.0f}'.format(*divmod(self.time, 60))
+        minutes, seconds = divmod(self.time, 60)
+        self.verbose_time = '{0:02.0f}:{1:02.0f}'.format(minutes, seconds)
 
     def set_connection_info(self): 
         # Set all the data

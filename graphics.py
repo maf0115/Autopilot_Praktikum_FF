@@ -227,11 +227,6 @@ def draw_scene(sim_data : list)->None:
     # Convert the coordinates of the jet for every function that needs them
     lat, lon = get_coordinates(sim_data)
 
-    # Draw fighter jet icon
-    draw_fighter_jet(lat, lon, sim_data[5])
-
-    # Render the trail
-    draw_trail(lat, lon)
 
     draw_connections()
     display_connection_data()
@@ -239,6 +234,11 @@ def draw_scene(sim_data : list)->None:
     draw_wypts()
     display_wyp_data()
     
+    # Draw fighter jet icon
+    draw_fighter_jet(lat, lon, sim_data[5])
+
+    # Render the trail
+    draw_trail(lat, lon)
 
     # Update the screen info
     display.update()
